@@ -47,6 +47,18 @@ seqcmp(char *seq, char *target)
 	return s;
 }
 
+int*
+seqcmpa(char *seq, int len, char *target)
+{
+	int i,
+		*a = (int*) malloc(len * sizeof(int));
+
+	for (i = 0; i < len; i++)
+		a[i] = seq[i] == target[i];
+
+	return a;
+}
+
 int
 main()
 {
