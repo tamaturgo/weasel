@@ -10,6 +10,8 @@ genseq(int len, int alphc, char alphv[])
 	for (i = 0; i < len; i++)
 		seq[i] = alphv[rand() % alphc];
 
+	seq[len] = '\0';
+
 	return seq;
 }
 
