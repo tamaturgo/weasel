@@ -10,9 +10,12 @@ static GtkWidget *target_entry;
 static GtkWidget *target_label;
 static GtkWidget *seq_label;
 
-static char *alph;
+static char *alphv;
+static int alphc;
 static char *target;
 static char *seq;
+static int len;
+static char *copies[COPY_COUNT];
 
 static void
 set_matched_text(GtkLabel *label, char *text, int match[])
@@ -44,19 +47,54 @@ set_matched_text(GtkLabel *label, char *text, int match[])
 static gboolean
 weasel_update(gpointer data)
 {
-	/* GENERATE THE COPIES, MUTATE, ETC */
+	int i, val,
+		best_val = 0, best_i = 0,
+		*match;
+
+	for (i = 0; i < COPY_COUNT; i++) {
+		strcpy(copies[i], seq);
+		modseq(copies + i, alphc, alphv, MUTATE_CHANCE);
+
+		/* Compare the current copy */
+		val = seqcmp(copies[i], target);
+
+		if (val > best_val) {
+			best_val = val;
+			best_i = i;
+		}
+	}
+
+	strcpy(seq, copies[best_i]);
+
+	match = seqcmpa(seq, strlen(seq), target);
+
+	set_matched_text(GTK_LABEL(target_label), target, match);
+	set_matched_text(GTK_LABEL(seq_label), seq, match);
+
 	g_print(".");
+
+	if (best_val == len) {
+		g_print("DONE\n");
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
 static void
 exec_weasel(GtkWidget *widget, gpointer data)
 {
-	int *match;
+	int *match, i;
 
-	alph = (char*) gtk_editable_get_text(GTK_EDITABLE(alph_entry));
+	alphv = (char*) gtk_editable_get_text(GTK_EDITABLE(alph_entry));
+	alphc = strlen(alphv);
+
 	target = (char*) gtk_editable_get_text(GTK_EDITABLE(target_entry));
-	seq = genseq(strlen(target), strlen(alph), alph);
+	len = strlen(target);
+	seq = genseq(len, alphc, alphv);
+
+	for (i = 0; i < COPY_COUNT; i++)
+		copies[i] = (char*) malloc((len + 1) * sizeof(char));
 
 	match = seqcmpa(seq, strlen(seq), target);
 	
