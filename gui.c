@@ -10,6 +10,7 @@ static GtkWidget *target_entry;
 static GtkWidget *target_label;
 static GtkWidget *seq_label;
 static GtkWidget *gen_label;
+static GtkWidget *back_button;
 
 static char *alphv;
 static int alphc;
@@ -55,6 +56,13 @@ update_genc_view()
 	gtk_label_set_markup(GTK_LABEL(gen_label), formatted);
 }
 
+static void
+back_to_form(GtkWidget *widget, gpointer data)
+{
+	gtk_widget_set_sensitive(back_button, FALSE);
+	gtk_stack_set_visible_child_name(GTK_STACK(stack), "form");
+}
+
 static gboolean
 weasel_update(gpointer data)
 {
@@ -85,7 +93,7 @@ weasel_update(gpointer data)
 	update_genc_view();
 
 	if (best_val == len) {
-		g_print("DONE\n");
+		gtk_widget_set_sensitive(back_button, TRUE);
 		return FALSE;
 	}
 
@@ -110,6 +118,7 @@ exec_weasel(GtkWidget *widget, gpointer data)
 	match = seqcmpa(seq, strlen(seq), target);
 
 	genc = 0;
+	gtk_label_set_markup(GTK_LABEL(gen_label), "<small>Gen: 0</small>");
 	
 	set_matched_text(GTK_LABEL(target_label), target, match);
 	set_matched_text(GTK_LABEL(seq_label), seq, match);
@@ -148,8 +157,6 @@ create_exec(GtkStack *stack)
 {
 	GtkWidget *box;
 	GtkWidget *buttons_box;
-	GtkWidget *back_button;
-	GtkWidget *hist_button;
 
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 20);
 	gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
@@ -167,10 +174,11 @@ create_exec(GtkStack *stack)
 	gtk_box_append(GTK_BOX(box), gen_label);
 
 	buttons_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+	gtk_widget_set_halign(buttons_box, GTK_ALIGN_CENTER);
 	gtk_box_append(GTK_BOX(box), buttons_box);
 
 	back_button = gtk_button_new_with_label("Back");
-	//g_signal_connect(back_button, "clicked", G_CALLBACK(goto_form), NULL);
+	g_signal_connect(back_button, "clicked", G_CALLBACK(back_to_form), NULL);
 	gtk_widget_set_halign(back_button, GTK_ALIGN_CENTER);
 	gtk_box_append(GTK_BOX(buttons_box), back_button);
 	gtk_widget_set_sensitive(back_button, FALSE);
