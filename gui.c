@@ -11,6 +11,7 @@ static GtkWidget *target_label;
 static GtkWidget *seq_label;
 static GtkWidget *gen_label;
 static GtkWidget *back_button;
+static GtkWidget *done_info;
 
 static char *alphv;
 static int alphc;
@@ -60,6 +61,7 @@ static void
 back_to_form(GtkWidget *widget, gpointer data)
 {
 	gtk_widget_set_sensitive(back_button, FALSE);
+	gtk_widget_hide(done_info);
 	gtk_stack_set_visible_child_name(GTK_STACK(stack), "form");
 }
 
@@ -94,6 +96,7 @@ weasel_update(gpointer data)
 
 	if (best_val == len) {
 		gtk_widget_set_sensitive(back_button, TRUE);
+		gtk_widget_show(done_info);
 		return FALSE;
 	}
 
@@ -155,11 +158,12 @@ create_form(GtkStack *stack)
 static void
 create_exec(GtkStack *stack)
 {
+	GtkWidget *grid;
 	GtkWidget *box;
-	GtkWidget *buttons_box;
+	GtkWidget *done_label;
 
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 20);
-	gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
+	//gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
 	gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
 	gtk_stack_add_named(stack, box, "exec");
 
@@ -173,15 +177,24 @@ create_exec(GtkStack *stack)
 	gtk_label_set_use_markup(GTK_LABEL(gen_label), TRUE);
 	gtk_box_append(GTK_BOX(box), gen_label);
 
-	buttons_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-	gtk_widget_set_halign(buttons_box, GTK_ALIGN_CENTER);
-	gtk_box_append(GTK_BOX(box), buttons_box);
-
 	back_button = gtk_button_new_with_label("Back");
 	g_signal_connect(back_button, "clicked", G_CALLBACK(back_to_form), NULL);
 	gtk_widget_set_halign(back_button, GTK_ALIGN_CENTER);
-	gtk_box_append(GTK_BOX(buttons_box), back_button);
+	gtk_box_append(GTK_BOX(box), back_button);
 	gtk_widget_set_sensitive(back_button, FALSE);
+
+	/* Setup a "done feedback" */
+
+	done_label = gtk_label_new("Done!");
+
+	done_info = gtk_info_bar_new();
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(done_info), GTK_MESSAGE_WARNING);
+	gtk_info_bar_add_child(GTK_INFO_BAR(done_info), done_label);
+	gtk_info_bar_add_button(GTK_INFO_BAR(done_info), "OK", GTK_RESPONSE_OK);
+	g_signal_connect(GTK_INFO_BAR(done_info), "response",
+					 G_CALLBACK(gtk_widget_hide), NULL);
+	gtk_box_append(GTK_BOX(box), done_info);
+	gtk_widget_hide(done_info);
 }
 
 static void
@@ -192,7 +205,7 @@ activate(GtkApplication *app, gpointer user_data)
 
 	window = gtk_application_window_new(app);
 	gtk_window_set_title(GTK_WINDOW(window), "Weasel");
-	gtk_window_set_default_size(GTK_WINDOW(window), 300, 200);
+	gtk_window_set_default_size(GTK_WINDOW(window), 300, 300);
 
 	stack = gtk_stack_new();
 	gtk_window_set_child(GTK_WINDOW(window), stack);
