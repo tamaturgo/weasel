@@ -9,6 +9,7 @@ static GtkWidget *alph_entry;
 static GtkWidget *target_entry;
 static GtkWidget *target_label;
 static GtkWidget *seq_label;
+static GtkWidget *gen_label;
 
 static char *alphv;
 static int alphc;
@@ -16,6 +17,7 @@ static char *target;
 static char *seq;
 static int len;
 static char *copies[COPY_COUNT];
+static int genc;
 
 static void
 set_matched_text(GtkLabel *label, char *text, int match[])
@@ -42,6 +44,15 @@ set_matched_text(GtkLabel *label, char *text, int match[])
 
 	gtk_label_set_markup(label, formatted);
 	free(formatted);
+}
+
+static void
+update_genc_view()
+{
+	char formatted[50];
+
+	sprintf(formatted, "<small>Gen: %d</small>", ++genc);
+	gtk_label_set_markup(GTK_LABEL(gen_label), formatted);
 }
 
 static gboolean
@@ -71,7 +82,7 @@ weasel_update(gpointer data)
 	set_matched_text(GTK_LABEL(target_label), target, match);
 	set_matched_text(GTK_LABEL(seq_label), seq, match);
 
-	g_print(".");
+	update_genc_view();
 
 	if (best_val == len) {
 		g_print("DONE\n");
@@ -97,6 +108,8 @@ exec_weasel(GtkWidget *widget, gpointer data)
 		copies[i] = (char*) malloc((len + 1) * sizeof(char));
 
 	match = seqcmpa(seq, strlen(seq), target);
+
+	genc = 0;
 	
 	set_matched_text(GTK_LABEL(target_label), target, match);
 	set_matched_text(GTK_LABEL(seq_label), seq, match);
@@ -149,6 +162,10 @@ create_exec(GtkStack *stack)
 	target_label = gtk_label_new("");
 	gtk_box_append(GTK_BOX(box), target_label);
 
+	gen_label = gtk_label_new("<small>Gen: 0</small>");
+	gtk_label_set_use_markup(GTK_LABEL(gen_label), TRUE);
+	gtk_box_append(GTK_BOX(box), gen_label);
+
 	buttons_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 	gtk_box_append(GTK_BOX(box), buttons_box);
 
@@ -167,7 +184,7 @@ activate(GtkApplication *app, gpointer user_data)
 
 	window = gtk_application_window_new(app);
 	gtk_window_set_title(GTK_WINDOW(window), "Weasel");
-	gtk_window_set_default_size(GTK_WINDOW(window), 270, 200);
+	gtk_window_set_default_size(GTK_WINDOW(window), 300, 200);
 
 	stack = gtk_stack_new();
 	gtk_window_set_child(GTK_WINDOW(window), stack);
